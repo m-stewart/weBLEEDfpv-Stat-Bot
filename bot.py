@@ -16,7 +16,6 @@ teams={
   'Tinywhoop': ['Leviticus 113','j4y','Axxion','GetSum','iridium239'],
   'WeBleed': ['QF1 QTFPV','Nitr0 FPV','Huff-19','Baconninja87','Farmers'],
   'Sendit': ['EzR4cer','Tasty','stewydB','XaeroFPV','Lounds'],
-  #'Phlebotomists': ['QTFPV','Nitr0','Huff-19','Baconninja87','Farmers'],
   #'Prop Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky']
   'IGOW Whoopouts': ['gMan','TMAD','Chewie','Trashbiss','LankyFPV'],
   # 'REDiRacers': ['Potayto','ZOETEK','Mayan_Hawk','JHow.FPV','da_bits'],
