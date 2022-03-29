@@ -16,15 +16,15 @@ teams={
   'Tinywhoop': ['Leviticus 113','j4y','Axxion','GetSum','iridium239'],
   'WeBleed': ['QF1 QTFPV','Nitr0 FPV','Huff-19','Baconninja87','Farmers'],
   'Sendit': ['EzR4cer','Tasty','stewydB','XaeroFPV','Lounds'],
-  #'Prop Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky']
+  'Prop Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky'],
   'IGOW Whoopouts': ['gMan','TMAD','Chewie','Trashbiss','LankyFPV'],
-  # 'REDiRacers': ['Potayto','ZOETEK','Mayan_Hawk','JHow.FPV','da_bits'],
-  # 'LOS Amigos': ['BrighFive','SchwiftyFPV','MrE','TRIM','Kbar'],
-  # 'Mandel-brats': ['TiltedFPV','ItsBlunty','Radioactiv3','PRESSURE','RibbitFPV'],
-  # 'Orqs': ['eedok','Tux-Rich','Tyrant','Solenya','double_action_FPV'],
-  # 'Bees Knees': ['OGDrLove','ZDZ','Claud','Onoteis','SGT FELIX'],
-  'Beta Bros': ['NeonFPV','VIPERX','BRDSRTRL','Syrus','ZeroVoltzFPV']
-  # 'AngelMode': ['Smeland_FPV','Jaysus','_ZAR_','FreedomFPV','Pinhead21']
+  'REDiRacers': ['Potayto','ZOETEK','Mayan_Hawk','JHow.FPV','da_bits'],
+  'LOS Amigos': ['BrighFive','SchwiftyFPV','MrE','TRIM','Kbar'],
+  'Mandel-brats': ['TiltedFPV','ItsBlunty','Radioactiv3','PRESSURE','RibbitFPV'],
+  'Orqs': ['eedok','Tux-Rich','Tyrant','Solenya','double_action_FPV'],
+  'Bees Knees': ['OGDrLove','ZDZ','Claud','Onoteis','SGT FELIX'],
+  'Beta Bros': ['NeonFPV','VIPERX','BRDSRTRL','Syrus','ZeroVoltzFPV'],
+  'AngelMode': ['Smeland_FPV','Jaysus','_ZAR_','FreedomFPV','Pinhead21']
 }
 
 
@@ -35,10 +35,10 @@ def code_block(string):
 def get_standings(command):
   tiers = {
     'Captains': [],
-    'Tier 1': [],
-    'Tier 2': [],
-    'Tier 3': [],
-    'Tier 4': []
+    '1': [],
+    '2': [],
+    '3': [],
+    '4': []
   }
   standings = {}
   team_standings = pd.DataFrame()
@@ -91,26 +91,49 @@ bot = commands.Bot(command_prefix='!')
 #tiers
 @bot.command(name='tiers', help='Shows current tiers')
 async def get_tiers(ctx):
-  output = "```\n"
+  output = ""
+  #output = "```\n"
   tiers_df = get_standings('tiersdf')
   for tier in tiers_df:
-    output = output+"{}:\n{}\n\n".format(tier,tiers_df[tier].to_string())
-  output = output+"\n```"
+    output = output+"!tier "+tier+"\n"
+    #output = output+"{}:\n{}\n\n".format(tier,tiers_df[tier].to_string())
+  #output = output+"\n```"
+  output = code_block(output)
   await ctx.send(content=output)
 
-#teams
+@bot.command(name='tier', help="Shows the tier specified. ex: !tier 1")
+async def get_tier(ctx, tier: str):
+  tiers_df = get_standings('tiersdf')
+  try:
+    output = tiers_df[tier]
+  except KeyError:
+    output = "{} not found.  Type !tiers to see a list of available commands".format(tier)
+  output = code_block(output)
+  await ctx.send(output)
+
+#Overall Standings
 @bot.command(name='standings', aliases=['teamtotals'],help='Shows team totals')
 async def get_team_totals(ctx):
   teams_df = get_standings('teamsdf')
   output = "```\n{}\n```".format(teams_df.to_string())
   await ctx.send(output)
 
+#teams
+#team <teamname>
+@bot.command(name='team', help="Shows the team's current times")
+async def get_team(ctx, teamname):
+  teams_df = get_standings('standings')
+  try:
+    output = teams_df[teamname].to_string()
+  except KeyError:
+    output = "{} not found.  Type !teams to see a list of possible team names".format(teamname)
+  output = code_block(output)
+  await ctx.send(output)
 @bot.command(name='teams', help='Shows each team')
 async def get_teams(ctx):
   output = ""
-  teams_df = get_standings('standings')
   for team in teams:
-    output = output+"{}:\n{}\n\n".format(team,teams_df[team].to_string())
+    output = output+team+"\n"
   output = code_block(output)
   await ctx.send(output)
 bot.run(TOKEN)
