@@ -6,6 +6,7 @@ import requests
 import pandas as pd
 from discord.ext import commands
 from wb_leaderboard import get_leaderboard
+from fuzzywuzzy import process
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -16,21 +17,27 @@ teams={
   'Tinywhoop': ['Leviticus 113','j4y','Axxion','GetSum','iridium239'],
   'WeBleed': ['QF1 QTFPV','Nitr0 FPV','Huff-19','Baconninja87','Farmers'],
   'Sendit': ['EzR4cer','Tasty','stewydB','XaeroFPV','Lounds'],
-  'Prop Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky'],
-  'IGOW Whoopouts': ['gMan','TMAD','Chewie','Trashbiss','LankyFPV'],
+  'Prop_Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky'],
+  'IGOW_Whoopouts': ['gMan','TMAD','Chewie','Trashbiss','LankyFPV'],
   'REDiRacers': ['Potayto','ZOETEK','Mayan_Hawk','JHow.FPV','da_bits'],
-  'LOS Amigos': ['BrighFive','SchwiftyFPV','MrE','TRIM','Kbar'],
+  'LOS_Amigos': ['BrighFive','SchwiftyFPV','MrE','TRIM','Kbar'],
   'Mandel-brats': ['TiltedFPV','ItsBlunty','Radioactiv3','PRESSURE','RibbitFPV'],
-  'Orqs': ['eedok','Tux-Rich','Tyrant','Solenya','double_action_FPV'],
-  'Bees Knees': ['OGDrLove','ZDZ','Claud','Onoteis','SGT FELIX'],
-  'Beta Bros': ['NeonFPV','VIPERX','BRDSRTRL','Syrus','ZeroVoltzFPV'],
-  'AngelMode': ['Smeland_FPV','Jaysus','_ZAR_','FreedomFPV','Pinhead21']
+  'Orqs': ['eedok','Tux-Rich','Tyrantt','_Solenya_','double_action_FPV'],
+  'Bees_Knees': ['OGDrLove','ZDZ','Claud','Onoteis','SGT FELIX'],
+  'Beta_Bros': ['NeonFPV','VIPERX','BRDSRTRL','Syrus','ZeroVoltzFPV'],
+  'AngelMode': ['Smeland_FPV','Jaysus','_ZAR_','FreedomFPV','Pinhead21'],
+  'Hawks': ['J0se', 'FPVSkittles', 'Rekt_Less', 'Bonebear', 'Gruver']
 }
 
 
 def code_block(string):
   output = "```\n{}\n```".format(string)
   return output
+
+def match_name(name,namelist):
+  match = process.extractOne(name,namelist)
+  return match
+
 
 def get_standings(command):
   tiers = {
@@ -45,8 +52,16 @@ def get_standings(command):
   final_tiers = {}
 
   export = get_leaderboard('15208')
-
+  #Fuzzy match pilot names to leaderboard names
+  lb_indices = export.index.to_list()
   for team in teams:
+    for i in range(len(teams[team])):
+      t = match_name(teams[team][i],lb_indices)
+      if t[1] > 80:
+        teams[team][i] = t[0]
+  for team in teams:
+    for member in teams[team]:
+      member = match_name(member,teams[team])
     standings[team] = export.iloc[export.index.isin(teams[team])].copy()
     for member in teams[team]:
       try:
@@ -84,6 +99,9 @@ def get_standings(command):
     return team_standings
   if command == 'standings':
     return standings
+
+
+
 
 #Bot Stuff
 bot = commands.Bot(command_prefix='!')
