@@ -1,3 +1,4 @@
 /.env
+/*.swp
 /wb_leaderboard.py
 /__pycache__
