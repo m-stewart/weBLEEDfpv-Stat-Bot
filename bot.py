@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 import requests
 import pandas as pd
 from discord.ext import commands
-from wb_leaderboard import get_leaderboard
 from fuzzywuzzy import process
+
+from wb_leaderboard import get_leaderboard
+import wb_google_sheet as wbsheet
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -100,6 +102,9 @@ def get_standings(command):
   if command == 'standings':
     return standings
 
+tresult = wbsheet.get_standings()
+print(tresult)
+quit()
 
 
 
@@ -110,12 +115,10 @@ bot = commands.Bot(command_prefix='!')
 @bot.command(name='tiers', help='Shows current tiers')
 async def get_tiers(ctx):
   output = ""
-  #output = "```\n"
+
   tiers_df = get_standings('tiersdf')
   for tier in tiers_df:
     output = output+"!tier "+tier+"\n"
-    #output = output+"{}:\n{}\n\n".format(tier,tiers_df[tier].to_string())
-  #output = output+"\n```"
   output = code_block(output)
   await ctx.send(content=output)
 
@@ -141,6 +144,7 @@ async def get_team_totals(ctx):
 @bot.command(name='team', help="Shows the team's current times")
 async def get_team(ctx, teamname):
   teams_df = get_standings('standings')
+  teamname = match_name(teamname, teams_df.index.to_list())
   try:
     output = teams_df[teamname].to_string()
   except KeyError:
