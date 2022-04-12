@@ -1,5 +1,5 @@
 /.env
+/test/
 /.bot.py.swp
-/wb_leaderboard.py
 /__pycache__
 /*.json

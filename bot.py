@@ -7,12 +7,18 @@ import pandas as pd
 from discord.ext import commands
 from fuzzywuzzy import process
 
+
 from wb_leaderboard import get_leaderboard
 import wb_google_sheet as wbsheet
 
+
+#use dotenv to store discord token
+
 load_dotenv()
+#Set track id here
+track_id = '15336'
 TOKEN = os.getenv('DISCORD_TOKEN')
-leaderboard = get_leaderboard('15208')
+leaderboard = get_leaderboard(track_id)
 
 teams={
   'Fatstraps': ['Orangestuff','NightwingFPV','SHEESHfpv','Crusher72','WinsonFPV'],
@@ -53,7 +59,7 @@ def get_standings(command):
   team_standings = pd.DataFrame()
   final_tiers = {}
 
-  export = get_leaderboard('15208')
+  export = get_leaderboard(track_id)
   #Fuzzy match pilot names to leaderboard names
   lb_indices = export.index.to_list()
   for team in teams:
@@ -102,20 +108,20 @@ def get_standings(command):
   if command == 'standings':
     return standings
 
-tresult = wbsheet.get_standings()
-print(tresult)
-quit()
-
-
-
 #Bot Stuff
 bot = commands.Bot(command_prefix='!')
+
+@bot.command(name='season', aliases=['overall'], help='Shows overall season standings')
+async def get_season(ctx):
+  output = ""
+  output = wbsheet.get_season_standings()
+  output = code_block(output)
+  await ctx.send(content=output)
 
 #tiers
 @bot.command(name='tiers', help='Shows current tiers')
 async def get_tiers(ctx):
   output = ""
-
   tiers_df = get_standings('tiersdf')
   for tier in tiers_df:
     output = output+"!tier "+tier+"\n"
@@ -144,7 +150,7 @@ async def get_team_totals(ctx):
 @bot.command(name='team', help="Shows the team's current times")
 async def get_team(ctx, teamname):
   teams_df = get_standings('standings')
-  teamname = match_name(teamname, teams_df.index.to_list())
+  teamname = match_name(teamname, teams.keys())[0]
   try:
     output = teams_df[teamname].to_string()
   except KeyError:
@@ -158,4 +164,5 @@ async def get_teams(ctx):
     output = output+team+"\n"
   output = code_block(output)
   await ctx.send(output)
+
 bot.run(TOKEN)

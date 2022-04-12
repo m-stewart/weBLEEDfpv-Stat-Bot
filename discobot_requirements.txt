@@ -1,0 +1,8 @@
+discord.py
+fuzzywuzzy
+numpy
+pandas
+pycryptodome
+python-dotenv
+python-Levenshtein-wheels
+requests
