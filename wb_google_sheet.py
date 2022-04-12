@@ -52,7 +52,7 @@ def get_sheet(creds):
         print("ERROR: {}".format(err))
     return values
 
-def get_standings():
+def get_season_standings():
     # Auth
     google_credentials = sheet_auth()
     # Get Spreadsheet Values
@@ -72,6 +72,3 @@ def get_standings():
     # Rearrange the columns
     season_standings_df = season_standings_df[header_order]
     return season_standings_df
-
-standings = get_standings()    
-print(standings)

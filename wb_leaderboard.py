@@ -47,7 +47,7 @@ def get_leaderboard(track_id):
     result = result.decode('utf-8').strip()
     #convert to json object
     final = json.loads(result)
-    if len(final['tracktimes'] == 0):
+    if not final['tracktimes']:
       print('Invalid track_id')
       quit(1)
     final_df = pd.json_normalize(final, record_path =['tracktimes'])
