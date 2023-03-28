@@ -6,35 +6,30 @@ import requests
 import pandas as pd
 from discord.ext import commands
 from fuzzywuzzy import process
-
-
-from wb_leaderboard import get_leaderboard
+from wb_leaderboard import get_leaderboard, get_track_id, update_track_id
 import wb_google_sheet as wbsheet
 
 
 #use dotenv to store discord token
-
 load_dotenv()
-#Set track id here
-track_id = '15336'
 TOKEN = os.getenv('DISCORD_TOKEN')
-leaderboard = get_leaderboard(track_id)
+
+#Set track id
+try:
+  track_id = dotenv_values(".env.trackid")['TRACK_ID']
+except:
+  track_id = '18755'
+
+#leaderboard = get_leaderboard(track_id)
 
 teams={
-  'Fatstraps': ['Orangestuff','NightwingFPV','SHEESHfpv','Crusher72','WinsonFPV'],
-  'Tinywhoop': ['Leviticus 113','j4y','Axxion','GetSum','iridium239'],
-  'WeBleed': ['QF1 QTFPV','Nitr0 FPV','Huff-19','Baconninja87','Farmers'],
-  'Sendit': ['EzR4cer','Tasty','stewydB','XaeroFPV','Lounds'],
-  'Prop_Fathers': ['AyyyKayy','Slappy','BellaCiao','Sharks','DirtyMcStinky'],
-  'IGOW_Whoopouts': ['gMan','TMAD','Chewie','Trashbiss','LankyFPV'],
-  'REDiRacers': ['Potayto','ZOETEK','Mayan_Hawk','JHow.FPV','da_bits'],
-  'LOS_Amigos': ['BrighFive','SchwiftyFPV','MrE','TRIM','Kbar'],
-  'Mandel-brats': ['TiltedFPV','ItsBlunty','Radioactiv3','PRESSURE','RibbitFPV'],
-  'Orqs': ['eedok','Tux-Rich','Tyrantt','_Solenya_','double_action_FPV'],
-  'Bees_Knees': ['OGDrLove','ZDZ','Claud','Onoteis','SGT FELIX'],
-  'Beta_Bros': ['NeonFPV','VIPERX','BRDSRTRL','Syrus','ZeroVoltzFPV'],
-  'AngelMode': ['Smeland_FPV','Jaysus','_ZAR_','FreedomFPV','Pinhead21'],
-  'Hawks': ['J0se', 'FPVSkittles', 'Rekt_Less', 'Bonebear', 'Gruver']
+  'Sim Simps': ['NeonFPV','Goatro','Kent FPV','GreasySlimebag','ironicallytasty.tv','ZOETEK','Derpy Hooves','Hendosaurr'],
+  'Tiny Warp Speeds': ['TDog_','DayLight FPV','J4y','Lounds','Radioactiv3','carlosecaceres2093','Greenhorn_FPV','jrice'],
+  'eMax': ['Orangestuff','TiltedFPV','GetSum','ProDangles','TMAD','AZ Cruz', 'TRASHBISS', 'Solenya'],
+  'FlyVibes': ['eedok','Phobos','Huff-19','John E Fly','stewydB','Crusher72','ToxicFPV','blam'],
+  'Whooping Wizards': ['Leviticus 113', 'SHEESHfpv', 'Solace', 'Vanadium','Axxion','flightning', 'Bondo_FPV', 'Kbar'],
+  '1s Finesse': ['MrChaus','QF1 QTFPV','WILDTYPE', 'Chet Mac', 'XaeroFPV', 'Dinglez', 'RushFPV', 'Farmers'],
+  'Quality Control': ['AyyyKayyy', 'ZDZ', 'MrE.', 'FPV_Cam', 'NightwingFPV', 'FPVSkittles', 'BellaCiao', 'iridium239']
 }
 
 
@@ -46,30 +41,55 @@ def match_name(name,namelist):
   match = process.extractOne(name,namelist)
   return match
 
+def authUser(user):
+  admin_users = ['StewydB#9027']
+  if str(user) in admin_users:
+    return True
+  else:
+    return False
+
+def restart_bot():
+  cmd = 'systemctl restart discobot'
+  try: 
+    os.popen(cmd)
+    result = 'Bot Restarted'
+  except:
+    result = 'Problem restarting bot'
+
 
 def get_standings(command):
   tiers = {
-    'Captains': [],
     '1': [],
     '2': [],
     '3': [],
-    '4': []
+    '4': [],
+    '5': [],
+    '6': [],
+    '7': [],
+    '8': []
   }
   standings = {}
   team_standings = pd.DataFrame()
   final_tiers = {}
 
   export = get_leaderboard(track_id)
+  if command == 'lb':
+    return export
   #Fuzzy match pilot names to leaderboard names
   lb_indices = export.index.to_list()
+  #remove spaces from pilot names for fuzzy matching
+  lb_indices_no_spaces = []
+  for pilot in range(len(lb_indices)):
+    lb_indices_no_spaces.append(lb_indices[pilot].replace(" ",""))
+  
   for team in teams:
     for i in range(len(teams[team])):
-      t = match_name(teams[team][i],lb_indices)
+      t = match_name(teams[team][i],lb_indices_no_spaces)
       if t[1] > 80:
-        teams[team][i] = t[0]
+        teams[team][i] = lb_indices[lb_indices_no_spaces.index(t[0])]
   for team in teams:
-    for member in teams[team]:
-      member = match_name(member,teams[team])
+    #for member in teams[team]:
+      #member = match_name(member,teams[team])
     standings[team] = export.iloc[export.index.isin(teams[team])].copy()
     for member in teams[team]:
       try:
@@ -87,6 +107,7 @@ def get_standings(command):
   for tier in tiers:
     tiersdf = pd.DataFrame(tiers[tier]).sort_values('Lap Time')
     tiersdf['Diff'] = tiersdf.diff().fillna(0)
+    tiersdf['From 1st'] = tiersdf['Lap Time'] - tiersdf['Lap Time'].iloc[0]
     final_tiers[tier] = tiersdf
 
   for team in teams:
@@ -95,7 +116,8 @@ def get_standings(command):
     team_standings = pd.concat([team_standings, current_team])
   team_standings.columns =['Total']
   team_standings = team_standings.sort_values('Total')
-  team_standings['diff'] = team_standings.diff().fillna(0)
+  team_standings['Diff'] = team_standings.diff().fillna(0)
+  team_standings['From 1st'] = team_standings['Total'] - team_standings['Total'].iloc[0]
 
   #Overall Team Standings:  team_standings
   #Tiers: final_tiers[tier]
@@ -108,8 +130,11 @@ def get_standings(command):
   if command == 'standings':
     return standings
 
+
 #Bot Stuff
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!',intents = intents)
 
 @bot.command(name='season', aliases=['overall'], help='Shows overall season standings')
 async def get_season(ctx):
@@ -164,5 +189,30 @@ async def get_teams(ctx):
     output = output+team+"\n"
   output = code_block(output)
   await ctx.send(output)
+
+#leaderboard - returns top 15 from leaderboard
+#leaderboard, lb
+@bot.command(name='leaderboard',aliases=['lb'],help='Shows first page of leaderboard')
+async def get_lb(ctx):
+  await ctx.send(code_block(get_standings('lb').head(25)))
+
+#Update - updates the track ID
+@bot.command(name='newtrack',help='Updates the track ID.  Requires admin')
+@commands.has_any_role('Sim Race Managers','Stat Bot Managers')
+async def newtrack(ctx):
+  #if authUser(ctx.message.author):
+  track = get_track_id('webleed')
+  if track['id'] is not None:
+    await ctx.send(update_track_id(track))
+    await ctx.send(restart_bot())
+  else:
+    await ctx.send("Problem getting new track info")
+  #else:
+    #await ctx.send("Not Authorized")
+
+@bot.event
+async def on_command_error(ctx,error):
+  if isinstance(error, commands.errors.CheckFailure):
+    await ctx.send("You do not have the correct role for this command")
 
 bot.run(TOKEN)
